@@ -10,6 +10,8 @@ class Game(db.Model):
    teamOneScore = db.Column(db.Integer, nullable = True)
    teamTwoScore = db.Column(db.Integer, nullable = True)
 
+   shots = db.relationship("Shot", cascade="delete")
+   
    def __init__(self, **kwargs):
       self.teamOneId = kwargs.get('teamOneId', 0)
       self.teamTwoId = kwargs.get('teamTwoId', 0)
@@ -22,7 +24,8 @@ class Game(db.Model):
             'teamOneId': self.teamOneId,
             'teamTwoId': self.teamTwoId,
             'teamOneScore': self.teamOneScore,
-            'TeamTwoScore': self.TeamTwoScore
+            'TeamTwoScore': self.TeamTwoScore,
+            'shots': [s.serialize() for s in self.shots]
         }
 
 class Player(db.Model):
@@ -30,21 +33,28 @@ class Player(db.Model):
    id = db.Column(db.Integer, primary_key = True)
    name = db.Column(db.String, nullable = False)
 
+   teams = db.relationship("Team", cascade="delete")
+   shots = db.relationship("Shot", cascade="delete")
+   
    def __init__(self, **kwargs):
       self.name = kwargs.get('name', '')
 
    def serialize(self):
       return {
          'player_id': self.id,
-         'name': self.name
+         'name': self.name,
+         'teams': [t.serialize() for t in self.teams],
+         'shots': [s.serialize() for s in self.shots]
       }
 
-class Team(db.Model):
+class Team(db.Model):   
    __tablename__ = 'team'
    id = db.Column(db.Integer, primary_key = True)
    playerOneId = db.Column(db.Integer, db.ForeignKey('player.id'), nullable = False)
    playerTwoId = db.Column(db.Integer, db.ForeignKey('player.id'), nullable = False)
 
+   games = db.relationship("Game", cascade = "delete")
+   
    def __init__(self, **kwargs):
       self.playerOneId = kwargs.get('playerOneId', 0)
       self.playerTwoId = kwargs.get('playerTwoId', 0)
@@ -53,7 +63,8 @@ class Team(db.Model):
       return {
          'team_id': self.id,
          'playerOneId': self.playerOneId,
-         'playerTwoId': self.playerTwoId
+         'playerTwoId': self.playerTwoId,
+         'games': [g.serialize() for g in self.games]
       }
 
 class Shot(db.Model):
